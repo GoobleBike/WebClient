@@ -44,13 +44,16 @@ GoobleView.prototype.setStatusModeView=function(){
   else {
     //PRODUCTION
     mappa.width("100%");
-    mappa.height("80%");
+    mappa.height("100%");
+    h=mappa.height()-100;
+    mappa.height(h+"px");
   }
 };
 
 GoobleView.prototype.showSplash=function(){
   if (this.mode===PRODUCTION){
     $("#splash").show(2000);
+//    $("#splash").show(2000,setTimeout(function(){ $("#splash").hide(); }, 5000));
   }
   else {
     //DEVELOP

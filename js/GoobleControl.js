@@ -13,7 +13,8 @@
 var DEVELOP="DEVELOP";
 var PRODUCTION="PRODUCTION";
 
-var URL = "http://192.168.188.130/gooble/api/setp_getv?id=0&p=";
+var URL = "http://localhost/gooble/api/setp_getv?id=0&p=";
+//var URL = "http://192.168.14.183/gooble/api/setp_getv?id=0&p=";
 var SLOPE = 0;
 
 
@@ -128,12 +129,26 @@ var AVERAGE_SPEED=MAX_SPEED; //
 var VISTAMAPPA="vistaMappa";
 var VISTAPANORAMA="vistaPanorama";
 
+//var presetPercorsi=[
+//  ["44.489623,11.309306","44.479385,11.296335","San Luca"],
+//  ["Via Siepelunga, 2 Bologna","Via Santa Liberata Bologna","Monte Donato"],
+//  ["via del genio 3 bologna","via di gaibola 6 bologna","via Del Genio"]
+////  ["46.607300, 12.277274","46.609857, 12.296371","3 Cime Di Lavaredo"]
+//];
+
 var presetPercorsi=[
-  ["Via Siepelunga, 2 Bologna","Via Santa Liberata Bologna","Monte Donato"],
-  ["44.489623,11.309306","44.479385,11.296335","San Luca"],
-  ["via del genio 3 bologna","via di gaibola 6 bologna","via Del Genio"],
-  ["46.607300, 12.277274","46.609857, 12.296371","3 Cime Di Lavaredo"]
+  ["Via ugo bassi, 2 Bologna","piazza medaglie d'oro Bologna","centro"],
+  ["porta castiglione bologna","porta saragozza bologna","viali sud ovest"],
+  ["via del genio 3 bologna","via di gaibola 6 bologna","via Del Genio"]
+//  ["46.607300, 12.277274","46.609857, 12.296371","3 Cime Di Lavaredo"]
 ];
+
+//var presetPercorsi=[
+//  ["Via Siepelunga, 2 Bologna","Via Siepelunga,20 Bologna","Monte Donato"],
+//  ["Via Monte Donato, 2 Bologna","Via Monte Donato,10 Bologna","Monte Donato"],
+//  ["via del genio 3 bologna","via del genio 15 bologna","via Del Genio"],
+//  ["46.607300, 12.277274","46.609857, 12.296371","3 Cime Di Lavaredo"]
+//];
 
 /**
  * GoogleControl implementa la parte controller dell'MVC della web-client application Gooble Bike
@@ -195,6 +210,7 @@ function GoobleControl() {
     //flag per non innescare un loop nel filtro
     this.eseguitoFiltro=false; // per (INCLINATION_FILTER_MODE===IF_BATCH)
     this.startPoint;
+    this.currentSegment=0;
 //    //accesso locale !!!ERRORE03 self è window.self, andrebbe eventualmente usata la variabili globale goobleControl
 //    alert(window.location);
 //    alert(self.location);
@@ -203,6 +219,7 @@ function GoobleControl() {
 //    alert(self.location);
     this.markersArray = [];
     //carica la mappa
+    console.log("Chiamata a loadMap");
     this.loadMap(DEFAULT_LOAD_MAP);
                 //sovrapponi logo
 //            document.getElementById("splash").style.visibility = "visible"; //ci vuole un metodo di vista
@@ -211,11 +228,44 @@ function GoobleControl() {
 //      alert("Presente");
       this.view.mostraPresetPercorsi(presetPercorsi)
     }
+    /*
+     * 
+     * TODO migliorare!!!!!! GR
+     */
+    this.currentSegment=presetPercorsi.length-1;
+    this.loadSegment();
+//    setTimeout(function(){
+//        $("#splash").hide(); 
+////        goobleControl.makeRoute("Via Siepelunga, 2 Bologna","Via Santa Liberata Bologna");
+//        goobleControl.makeRoute(presetPercorsi[goobleControl.currentSegment][0],presetPercorsi[goobleControl.currentSegment][1]);
+//        setTimeout(function(){ goobleControl.autorunBySpeed(); }, 5000);
+//        
+//    }, 5000)
+    
 //    else {
 //      alert("Manca");
 //    }
 }
 
+
+GoobleControl.prototype.loadSegment = function() {
+    //carica il prossimo segmento presetPercorsi
+    if (this.currentSegment<presetPercorsi.length-1){
+        this.currentSegment++;
+    }
+    else {
+        this.currentSegment=0;
+    }
+    console.log('load segment '+this.currentSegment);
+    setTimeout(function(){
+        $("#splash").hide(); 
+        console.log("current segment : "+goobleControl.currentSegment);
+        console.log("start : "+presetPercorsi[goobleControl.currentSegment][0]);
+        goobleControl.makeRoute(presetPercorsi[goobleControl.currentSegment][0],presetPercorsi[goobleControl.currentSegment][1]);
+        setTimeout(function(){ goobleControl.autorunBySpeed(); }, 5000);
+        
+    }, 5000);
+};
 
 GoobleControl.prototype.placeMarker = function(location) {
 
@@ -234,7 +284,7 @@ GoobleControl.prototype.placeMarker = function(location) {
 
 
     }
-}
+};
 
 
 /**
@@ -628,6 +678,7 @@ GoobleControl.prototype.calcElevationVersione500 = function(newArray, callback) 
 
 };
 
+/*
 //simulazione di percorso in automatico
 GoobleControl.prototype.autoRun = function() {
   //fai partire la route
@@ -641,6 +692,9 @@ GoobleControl.prototype.autoRun = function() {
   }
 
 }
+*/
+
+/*
 //simulazione di percorso in automatico
 GoobleControl.prototype.autoRunOld = function() {
     //passa in street view
@@ -664,13 +718,32 @@ GoobleControl.prototype.autoRunOld = function() {
         alert("Critical Error GoobleControl 0004");
     }
 }
+*/                    
+                    
 GoobleControl.prototype.pollSpeedFromDefaulUrl = function () {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.open( "GET", URL+parseInt(SLOPE), false ); // false for synchronous request
     xmlHttp.send( null );
-    SPEED = parseInt(JSON.parse(xmlHttp.responseText).resp.v) / 3.6;
+//    SPEED = parseInt(JSON.parse(xmlHttp.responseText).resp.v) / 3.6;
+//    SPEED = parseInt(JSON.parse(xmlHttp.responseText).resp.v);
+    msg=JSON.parse(xmlHttp.responseText);
+    if (msg.ck=='OK'){
+        if (msg.resp.v=="UNKNOWN") {
+            SPEED=0;
+        }
+        else {
+            SPEED = parseInt(msg.resp.v);//km/h
+            //TODO:notifica in cruscotto
+        }
+    }
+    else{
+        SPEED=0;
+        //TODO:notifica in cruscotto
+    }
     return xmlHttp.responseText;
 };
+
+
 GoobleControl.prototype.autorunBySpeed = function () {
   if (goobleControl.bikeRideStart()) {
     //programma click
@@ -683,6 +756,7 @@ GoobleControl.prototype.autorunBySpeed = function () {
   }
 };
 
+/*
 //si automaticamente muove di un passo ed avvia il timeout per il passo successivo
 GoobleControl.prototype.autoMove = function() {
   var percorsoFinito=goobleControl.moveNextClick();
@@ -693,15 +767,20 @@ GoobleControl.prototype.autoMove = function() {
         this.autoTimer = setTimeout(this.autoMove.bind(this), tempo);
   }
 }
+*/
+
 GoobleControl.prototype.autoMoveBySpeed = function() {
-  if (!percorsoFinito){
+    console.log(goobleControl.percorsoAttivo?'autoMove-attivo':'autoMove-NONattivo')
+  if (goobleControl.percorsoAttivo){
     //programma click
-    var distanza = SPEED * VIEW_REFRESH_TIME / 1000 // VIEW_REFRESH_TIME è in msec
+    var distanza = (SPEED /1)* VIEW_REFRESH_TIME / 1000 // VIEW_REFRESH_TIME è in msec
     var percorsoFinito=goobleControl.moveNextDistance(distanza);
 //        this.autoTimer = setTimeout(this.autoMove.bind(this), 2000);
         // this.autoTimer = setTimeout(this.autoMove.bind(this), tempo);
   }
 }
+
+/*
 //si automaticamente muove di un passo ed avvia il timeout per il passo successivo
 GoobleControl.prototype.autoMoveOld = function() {
     this.view.updateDashboard();
@@ -720,6 +799,7 @@ GoobleControl.prototype.autoMoveOld = function() {
         this.goobleButtons.action(this.goobleButtons.STOP);
     }
 };
+*/
 
 GoobleControl.prototype.sendInclination = function(value) {
     value=parseInt(value);
@@ -886,15 +966,18 @@ GoobleControl.prototype.bikeRideStart = function() {
         tuttoOk=false;
     }
     return tuttoOk;
-}
+};
 
+
+/*
 //ferma il rilevamento dei middle clik
 GoobleControl.prototype.bikeRideStop = function() {
     //TODO: termine del movimento
     this.goobleButtons.action(this.goobleButtons.STOP);
     clearTimeout(this.autoTimer);
     this.percorsoAttivo=false;
-}
+};
+*/
 
 //cancella il percorso e si porta allo stato iniziale
 GoobleControl.prototype.clearRoute = function() {
@@ -907,7 +990,7 @@ GoobleControl.prototype.clearRoute = function() {
     //DEBUG: rimuove le coordinate dal pannello di stato
    // document.getElementById("array").innerHTML = "<table border=\"1\"><thead><tr><th>N</th><th>Lat</th><th>Lng</th><th>Pov</th><th>Dst</th><th>Elv</th><th>Inc</th><th>Dst TOT</th><th>Elv2</th></tr></thead><tbody id=\"arrayTableBody\"></tbody></table>";
     this.goobleButtons.action(this.goobleButtons.RESTART);
-    clearTimeout(this.autoTimer);
+//    clearTimeout(this.autoTimer);
     this.stradaPercorsa=0;
     this.toNextPoint=0;
 }
@@ -944,7 +1027,9 @@ GoobleControl.prototype.timeOutFermo = function() {
   this.actualSpeed=0;
   //aggiorno cruscotto
   this.view.updateDashboard();
-}
+};
+
+/*
 //si muove di un punto al rilevemanto di un middle click
 GoobleControl.prototype.moveNextClick = function() {
     // ho avuto un click
@@ -997,14 +1082,14 @@ GoobleControl.prototype.moveNextClick = function() {
       this.view.updateDashboard();
     }
     return percorsoFinito;
-}
-
+};
+*/
 
 
 GoobleControl.prototype.moveNextDistance = function(distance) {
     // ho avuto un click
-    clearTimeout(this.timerFermo); // disabilito il timeout precedente
-    this.timerFermo = setTimeout(this.timeOutFermo.bind(this), TIMEOUT_PER_FERMO); // armo il prossimo timeout
+//    clearTimeout(this.timerFermo); // disabilito il timeout precedente
+//    this.timerFermo = setTimeout(this.timeOutFermo.bind(this), TIMEOUT_PER_FERMO); // armo il prossimo timeout
     var percorsoFinito=false;
     //un colpo di click indica una avanzamento sulla strada percorsa
     var now=new Date().getTime();
@@ -1044,17 +1129,24 @@ GoobleControl.prototype.moveNextDistance = function(distance) {
             this.pendenza=curPoint.inc;
             SLOPE = this.pendenza
           }
+          this.view.updateDashboard();
       }
       else {
           //arrivato a destinazione ferma autorun
+          this.percorsoAttivo=false;
+        clearInterval(this.autoTimer);
+        clearInterval(this.speedPoller);
           this.goobleButtons.action(this.goobleButtons.STOP);
-          this.view.msgFinePath();
+          this.clearRoute();
+          $("#splash").show(2000);
+//          this.view.msgFinePath();
           percorsoFinito=true;
+          this.loadSegment();
       }
-      this.view.updateDashboard();
+//      this.view.updateDashboard();
     }
     return percorsoFinito;
-}
+};
 
 
 
@@ -1086,15 +1178,18 @@ GoobleControl.prototype.mouseDown = function(event) {
 }
 //carica una mappa nel canvas
 GoobleControl.prototype.loadMap = function(origin) {
+    console.log("loadMap")
     //crea l'oggetto di accesso al servizio
     //geoposiziona l'indirizzo
     this.geoCoder.geocode({'address': origin}, function(results, status) {
+//    goobleControl.geoCoder.geocode({'address': origin}, function(results, status) {
         //callback del geoposizionamento
         if (status == google.maps.GeocoderStatus.OK) {
             //visualizza mappa usando la location ottenuta
             var originPos = results[0].geometry.location;
 //  ERRORE01 la funzione callback non è eseguita dall'oggetto goobleControl ma da oggetto global!!!
             this.mapOrigin = originPos;
+//            goobleControl.mapOrigin = originPos;
             var mapOptions = {
                 center: originPos,
                 zoom: 14,
@@ -1104,7 +1199,10 @@ GoobleControl.prototype.loadMap = function(origin) {
             //mostra la mappa nel canvas
 //  ERRORE02 la funzione callback non è eseguita dall'oggetto goobleControl ma da oggetto global!!!
             this.map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+//            goobleControl.map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
             this.vistamappa=VISTAMAPPA;
+//            goobleControl.vistamappa=VISTAMAPPA;
+            console.log("loadMap: mappa caricata")
 //            //sovrapponi logo
 //            è compito del costruttore
 ////            document.getElementById("splash").style.visibility = "visible";
