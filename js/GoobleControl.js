@@ -13,12 +13,16 @@
 var DEVELOP="DEVELOP";
 var PRODUCTION="PRODUCTION";
 
-var URL = "http://localhost/gooble/api/setp_getv?id=0&p=";
+var MYID=0;
+var LOGHOST="localhost";
+//var LOGHOST="itis0001.belluzzifioravanti.it";
+var LOGAPI=LOGHOST+"/gooble/api/log?id="+MYID+"";
+var URL = "http://localhost/gooble/api/setp_getv?id="+MYID+"&p=";
 //var URL = "http://192.168.14.183/gooble/api/setp_getv?id=0&p=";
+
 var SLOPE = 0;
 
-
-var VIEW_REFRESH_TIME = 450;
+var VIEW_REFRESH_TIME = 950;
 var DATA_REFRESH_TIME = 1000;
 //delle prossime due va attivata una sola
 //var GOOBLE_CONTROL_MODE=DEVELOP;
@@ -128,7 +132,7 @@ var AVERAGE_SPEED=MAX_SPEED; //
 //per la vista mappa/panorama
 var VISTAMAPPA="vistaMappa";
 var VISTAPANORAMA="vistaPanorama";
-
+/*
 //var presetPercorsi=[
 //  ["44.489623,11.309306","44.479385,11.296335","San Luca"],
 //  ["Via Siepelunga, 2 Bologna","Via Santa Liberata Bologna","Monte Donato"],
@@ -137,9 +141,11 @@ var VISTAPANORAMA="vistaPanorama";
 //];
 
 var presetPercorsi=[
-  ["Via ugo bassi, 2 Bologna","piazza medaglie d'oro Bologna","centro"],
-  ["porta castiglione bologna","porta saragozza bologna","viali sud ovest"],
-  ["via del genio 3 bologna","via di gaibola 6 bologna","via Del Genio"]
+//  ["Via ugo bassi, 2 Bologna","piazza medaglie d'oro Bologna","centro"],
+  ["Piazza maggiore Bologna","stazione centrale Bologna","Old town<br>from Piazza Maggiore<br>to Stazione Centrale"],
+  ["porta castiglione bologna","porta saragozza bologna","from Porta Castiglione<br>to porta Saragozza"],
+//  ["via del genio 3 bologna","via di gaibola 6 bologna","via Del Genio"]
+  ["via del genio 3 bologna","via del genio 13 bologna","via Del Genio"]
 //  ["46.607300, 12.277274","46.609857, 12.296371","3 Cime Di Lavaredo"]
 ];
 
@@ -149,6 +155,7 @@ var presetPercorsi=[
 //  ["via del genio 3 bologna","via del genio 15 bologna","via Del Genio"],
 //  ["46.607300, 12.277274","46.609857, 12.296371","3 Cime Di Lavaredo"]
 //];
+*/
 
 /**
  * GoogleControl implementa la parte controller dell'MVC della web-client application Gooble Bike
@@ -158,6 +165,8 @@ var presetPercorsi=[
 function GoobleControl() {
     //il modo può essere DEVELOP o PRODUCTION a seconda del valore della costatnte GOOBLE_CONTROL_MODE
     this.mode=GOOBLE_CONTROL_MODE;
+    //error manager
+    this.em=new ErrorManager(LOGAPI);
     //view
     this.view=new GoobleView(this.mode);
     //model
@@ -212,11 +221,11 @@ function GoobleControl() {
     this.startPoint;
     this.currentSegment=0;
 //    //accesso locale !!!ERRORE03 self è window.self, andrebbe eventualmente usata la variabili globale goobleControl
-//    alert(window.location);
-//    alert(self.location);
+//    this.em.debug(window.location);
+//    this.em.debug(self.location);
 //    this.location="goobleControl";
     self = this;
-//    alert(self.location);
+//    this.em.debug(self.location);
     this.markersArray = [];
     //carica la mappa
     console.log("Chiamata a loadMap");
@@ -225,14 +234,15 @@ function GoobleControl() {
 //            document.getElementById("splash").style.visibility = "visible"; //ci vuole un metodo di vista
             this.view.showSplash();
     if (typeof presetPercorsi != 'undefined' && presetPercorsi.length>0) {
-//      alert("Presente");
+//      this.em.debug("Presente");
       this.view.mostraPresetPercorsi(presetPercorsi)
     }
     /*
      * 
      * TODO migliorare!!!!!! GR
      */
-    this.currentSegment=presetPercorsi.length-1;
+//    this.currentSegment=presetPercorsi.length-1;
+    this.currentSegment=-1;
     this.loadSegment();
 //    setTimeout(function(){
 //        $("#splash").hide(); 
@@ -243,7 +253,7 @@ function GoobleControl() {
 //    }, 5000)
     
 //    else {
-//      alert("Manca");
+//      this.em.debug("Manca");
 //    }
 }
 
@@ -255,15 +265,22 @@ GoobleControl.prototype.loadSegment = function() {
     }
     else {
         this.currentSegment=0;
+//        this.em.debug("reboot");
+        location.reload(); 
     }
     console.log('load segment '+this.currentSegment);
+    this.clearRoute();
+//    $("#preload_info").html(presetPercorsi[this.currentSegment][2]+" <br> from "+presetPercorsi[this.currentSegment][0]+"<br> to "+presetPercorsi[this.currentSegment][1]);
+//    $("#cruscotto_info").html(presetPercorsi[this.currentSegment][2]+" <br> from "+presetPercorsi[this.currentSegment][0]+"<br> to "+presetPercorsi[this.currentSegment][1]);
+    $("#preload_info").html(presetPercorsi[this.currentSegment][2]);
+    $("#cruscotto_info").html(presetPercorsi[this.currentSegment][2]);
     setTimeout(function(){
+        $("#splash2").hide(); 
         $("#splash").hide(); 
         console.log("current segment : "+goobleControl.currentSegment);
         console.log("start : "+presetPercorsi[goobleControl.currentSegment][0]);
         goobleControl.makeRoute(presetPercorsi[goobleControl.currentSegment][0],presetPercorsi[goobleControl.currentSegment][1]);
-        setTimeout(function(){ goobleControl.autorunBySpeed(); }, 5000);
-        
+        setTimeout(function(){ goobleControl.autorunBySpeed(); }, 5000);        
     }, 5000);
 };
 
@@ -307,6 +324,7 @@ GoobleControl.prototype.cbMakeRoute = function(result, status) {
         //estrae punti dal percorso e li memorizza nei gooble points
         //percorre gli steps
         var mySteps = directionsResultObj.routes[0].legs[0].steps;
+        //var totalDistance=directionsResultObj.routes[0].legs[0].distance;
         var stepElements = mySteps.length;
         var i;
         var lastLat = 0;
@@ -322,7 +340,7 @@ GoobleControl.prototype.cbMakeRoute = function(result, status) {
                   var lat = Math.round(mySteps[i].path[j].lat()*10000)/10000;
                   var lng = Math.round(mySteps[i].path[j].lng()*10000)/10000;
                 if ((lat != lastLat) && (lng != lastLng)) {
-                    //alert("sonodentro");
+                    //this.em.debug("sonodentro");
                     var point = new GooblePoint(mySteps[i].path[j].lat(), mySteps[i].path[j].lng(), 0, 0, 0, 0, 0);
                     self.gooblePath.add(point);
                     lastLat=lat;
@@ -346,7 +364,7 @@ GoobleControl.prototype.cbMakeRoute = function(result, status) {
 
     }
     else  {
-      alert("Critical Error GoobleControl 0001");
+      this.em.critical("Critical Error GoobleControl 0001");
     }
 
 };
@@ -399,7 +417,7 @@ GoobleControl.prototype.calcolaPovDistanzePath = function() {
 //                goobleControl.view.dumpPath(self.gooblePath);
             }
             else {
-                alert("Critical Error GoobleControl 0002");
+                this.em.critical("Critical Error GoobleControl 0002");
             }
 }
 
@@ -424,8 +442,8 @@ GoobleControl.prototype.calcolaAltezzaInclinazionePath = function() {
             GoobleControl.prototype.calcolaInclinazionePath();
         });
     }
-//    else alert("PERCORSO TROPPO LUNGO, REIMPOSTARE");
-    else alert("Critical Error GoobleControl 0013");
+//    else this.em.critical("PERCORSO TROPPO LUNGO, REIMPOSTARE");
+    else this.em.critical("Critical Error GoobleControl 0013");
 
 };
 
@@ -452,7 +470,7 @@ GoobleControl.prototype.calcolaInclinazionePath = function() {
             }
         }
         else {
-            alert("Critical Error GoobleControl 0003");
+            this.em.critical("Critical Error GoobleControl 0003");
         }
 
         if (INCLINATION_FILTER_MODE===IF_BATCH || INCLINATION_FILTER_MODE===IF_ABSORBER) {
@@ -482,7 +500,7 @@ GoobleControl.prototype.calcolaInclinazionePath = function() {
             }
         }
         else {
-            alert("non dovrebbe accadere");
+            this.em.critical("non dovrebbe accadere");
         }
 
 
@@ -502,7 +520,7 @@ GoobleControl.prototype.calcolaInclinazionePath = function() {
             }
         }
         else {
-            alert("non dovrebbe accadere");
+            this.em.critical("non dovrebbe accadere");
         }
   */
 //_____________________________________
@@ -592,6 +610,7 @@ GoobleControl.prototype.makeRoute = function(start, end) {
         origin: start,
         destination: end,
         travelMode: google.maps.TravelMode.WALKING
+//        travelMode: google.maps.TravelMode.BICYCLING
     };
 
 
@@ -629,25 +648,25 @@ GoobleControl.prototype.calcInclination = function(curPoint, nextPoint) {
  * @returns {undefined}
  */
 GoobleControl.prototype.calcElevation = function(newArray, callback) {
-    //alert(newArray.length);
+    //this.em.debug(newArray.length);
 
     var positionalRequest = {
         'locations': newArray
     };
     this.elevation.getElevationForLocations(positionalRequest, function(results, status) {
-        //alert("entrato");
+        //this.em.debug("entrato");
         if (status === google.maps.ElevationStatus.OK) {
             if (results[0]) {
                 callback(results);
-            }else alert("Critical Error GoobleControl 0008");
-        }else alert("Critical Error GoobleControl 0009");
+            }else goobleControl.em.critical("Critical Error GoobleControl 0008");
+        }else goobleControl.em.critical("Critical Error GoobleControl 0009");
     });
 };
 
 
 //Calcola l'altitudine di un punto
 GoobleControl.prototype.calcElevationVersione500 = function(newArray, callback) {
-    //alert(newArray.length);
+    //this.em.debug(newArray.length);
 
    var dimGruppo=500;
         var nGruppi=newArray.length/dimGruppo;
@@ -663,13 +682,13 @@ GoobleControl.prototype.calcElevationVersione500 = function(newArray, callback) 
                 }
 
                 this.elevation.getElevationForLocations(positionalRequest, function(results, status) {
-        //alert("entrato");
-        if (status === google.maps.ElevationStatus.OK) {
-            if (results[0]) {
-                callback(results, gruppo*dimGruppo);
-            }else alert("Critical Error GoobleControl 0010");
-        }else alert("Critical Error GoobleControl 0011");
-    });
+                    //this.em.debug("entrato");
+                    if (status === google.maps.ElevationStatus.OK) {
+                        if (results[0]) {
+                            callback(results, gruppo*dimGruppo);
+                        }else goobleControl.em.critical("Critical Error GoobleControl 0010");
+                    }else goobleControl.em.critical("Critical Error GoobleControl 0011");
+                });
 
                 gruppo++;
         }while(gruppo<nGruppi)
@@ -715,7 +734,7 @@ GoobleControl.prototype.autoRunOld = function() {
         this.view.updateDashboard();
     }
     else {
-        alert("Critical Error GoobleControl 0004");
+        this.em.critical("Critical Error GoobleControl 0004");
     }
 }
 */                    
@@ -773,7 +792,7 @@ GoobleControl.prototype.autoMoveBySpeed = function() {
     console.log(goobleControl.percorsoAttivo?'autoMove-attivo':'autoMove-NONattivo')
   if (goobleControl.percorsoAttivo){
     //programma click
-    var distanza = (SPEED /1)* VIEW_REFRESH_TIME / 1000 // VIEW_REFRESH_TIME è in msec
+    var distanza = (SPEED *1.5)* VIEW_REFRESH_TIME / 1000 // VIEW_REFRESH_TIME è in msec
     var percorsoFinito=goobleControl.moveNextDistance(distanza);
 //        this.autoTimer = setTimeout(this.autoMove.bind(this), 2000);
         // this.autoTimer = setTimeout(this.autoMove.bind(this), tempo);
@@ -814,12 +833,12 @@ GoobleControl.prototype.sendInclination = function(value) {
 GoobleControl.prototype.filter = function(k, salto) {
 //TODO
     var flagFiltrato = false;
-//alert("dentro a filter")
+//this.em.debug("dentro a filter")
     if (k < self.gooblePath.path.length - 2) {
         if (self.gooblePath.path[k].dst > salto) {
-            //alert("dentro a if di filter");
+            //goobleControl.em.debug("dentro a if di filter");
             flagFiltrato = true;
-            // alert();
+            // 
 
             var next = k + 2;
 
@@ -894,7 +913,7 @@ GoobleControl.prototype.moveToNext = function(iterator) {
         this.rideStep++;
     }
     else {
-      alert("Critical Error GoobleControl 0005");
+      this.em.critical("Critical Error GoobleControl 0005");
     }
 
     //DEBUG: dati nel pannello di stato
@@ -962,7 +981,7 @@ GoobleControl.prototype.bikeRideStart = function() {
         this.percorsoAttivo=true;
     }
     else {
-        alert("Critical Error GoobleControl 0006");
+        this.em.critical("Critical Error GoobleControl 0006");
         tuttoOk=false;
     }
     return tuttoOk;
@@ -1137,11 +1156,18 @@ GoobleControl.prototype.moveNextDistance = function(distance) {
         clearInterval(this.autoTimer);
         clearInterval(this.speedPoller);
           this.goobleButtons.action(this.goobleButtons.STOP);
-          this.clearRoute();
-          $("#splash").show(2000);
+//          this.clearRoute();//portato dentro a loadSegment
+//          $("#splash2text").html("Complimenti!!!<br>Hai completato il percorso:<br>"+presetPercorsi[this.currentSegment][2]);
+          $("#splash2text").html("Congratulations !!! <br> You've completed the path:<br>"+presetPercorsi[this.currentSegment][2]);
+          $("#splash2").show();
+//          $("#splash").show(2000);
 //          this.view.msgFinePath();
           percorsoFinito=true;
-          this.loadSegment();
+//          this.loadSegment();
+            setTimeout(function(){
+                goobleControl.loadSegment();        
+            }, 5000);
+          
       }
 //      this.view.updateDashboard();
     }
@@ -1167,12 +1193,12 @@ GoobleControl.prototype.mouseDown = function(event) {
         case 2:
 
             //right button: TODO menu contestuale personalizzato
-            //alert("menu personalizzato");
+            //this.em.debug("menu personalizzato");
             //result=false;
             result = true;
             break;
         default:        //no button: TODO gestione errore
-            alert("Critical Error GoobleControl 0007");
+            this.em.critical("Critical Error GoobleControl 0007");
     }
     return result;
 }
@@ -1216,8 +1242,8 @@ GoobleControl.prototype.loadMap = function(origin) {
             });
         }
         else {
-//            alert("Geocode was not successful for the following reason: " + status);
-            alert("Critical Error GoobleControl 0012 " + status);
+//            this.em.critical("Geocode was not successful for the following reason: " + status);
+            goobleControl.em.critical("Critical Error GoobleControl 0012 " + status);
         }
     });
     //N.B.:essendo stata chiamata una callback questa viene eseguita in modo asincrono

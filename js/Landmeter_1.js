@@ -328,7 +328,7 @@ Landmeter.prototype.draw = function() {
 		this.writeText(options);
 		
 	} else {
-		alert("Canvas not supported by your browser!");
+		goobleControl.em.critical("Canvas not supported by your browser!");
 	}
 	
 	if(this.iTargetInclination == this.iCurrentInclination) {
@@ -394,7 +394,7 @@ Landmeter.prototype.drawWithInputValue = function(myInclination) {
         }
 //        this.job = setTimeout("this.draw()", 5);
         this.draw();
-//alert("drow?");
+//goobleControl.em.debug("drow?");
  
     }
 }

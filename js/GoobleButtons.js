@@ -51,7 +51,7 @@ GoobleButtons.prototype.setButtons = function() {
                 this.newRouteButton.disabled = false;
                 break;
             default:
-                alert("Critical Error GoobleButton 0001");
+                goobleControl.em.critical("Critical Error GoobleButton 0001");
         }
     }
     else {
@@ -88,7 +88,7 @@ GoobleButtons.prototype.action = function(request) {
             this.isRiding = this.STBY;
             break;
         default:
-            alert("Critical Error GoobleButtons 0002");
+            goobleControl.em.critical("Critical Error GoobleButtons 0002");
     }
     this.setButtons();
 };

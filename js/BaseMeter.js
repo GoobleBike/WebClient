@@ -283,7 +283,7 @@ BaseMeter.prototype.draw = function() {
 
 		
 	} else {
-		alert("Canvas not supported by your browser!");
+		goobleControl.em.critical("Canvas not supported by your browser!");
 	}
 	
 	if(this.iTargetMeasure == this.iCurrentMeasure) {
@@ -371,7 +371,7 @@ BaseMeter.prototype.drawWithInputValue = function(myMeasure) {
           this.job = setTimeout("goobleControl.view.speedometer.draw()", this.jobTimeout);
         }
         this.draw();
-//alert("drow?");
+//tgoobleControl.em.debug("drow?");
  
     }
 };

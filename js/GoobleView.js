@@ -63,6 +63,7 @@ GoobleView.prototype.showSplash=function(){
 
 GoobleView.prototype.hideSplash=function(){
   $("#splash").hide();
+  $("#splash2").hide();
 };
 
 GoobleView.prototype.statusMessage=function(msg){
@@ -134,7 +135,7 @@ GoobleView.prototype.dumpPath=function(path){
 };
 
   GoobleView.prototype.msgFinePath=function(){
-    alert("Fine percorso, complimenti!");
+    goobleControl.em.debug("Fine percorso, complimenti!");
   };
 
 GoobleView.prototype.updateDashboard=function(){

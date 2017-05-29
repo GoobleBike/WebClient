@@ -38,6 +38,7 @@ GooblePanorama.prototype.update = function(curPoint,nextPoint) {
               pitch: 0,
               zoom: 1
       });
+      console.log('pov='+this.nextPoint.pov+"ODD -> "+JSON.stringify(this.panoramaOdd.getLinks()));
     }
   }
   else {
@@ -53,6 +54,7 @@ GooblePanorama.prototype.update = function(curPoint,nextPoint) {
               pitch: 0,
               zoom: 1
       });
+      console.log('pov='+this.nextPoint.pov+"EVEN -> "+JSON.stringify(this.panoramaEven.getLinks()));
     }
   }
   
@@ -85,6 +87,7 @@ GooblePanorama.prototype.istanziaPanoramas = function() {
     scrollwheel: false
   };
   this.panoramaOdd = new google.maps.StreetViewPanorama(this.elementId, panoramaOptions);
+//  goobleControl.em.debug(JSON.stringify(this.panoramaOdd.getLinks()))
   this.map.setStreetView(this.panoramaOdd);
   
 }

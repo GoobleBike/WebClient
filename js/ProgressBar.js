@@ -85,6 +85,6 @@ ProgressBar.prototype.drawProgress = function(s) {
         this.img.src = 'images/progress_tiles206x66.jpg';
 
     } else {
-        alert("Canvas not supported!");
+        goobleControl.em.critical("Canvas not supported!");
     }
 }
