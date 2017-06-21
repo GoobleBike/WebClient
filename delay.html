@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Gooble Bike Starter</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script type="text/javascript" src="lib/jquery-1.9.1.min.js"></script>
+    </head>
+    <body>
+        <style>
+            body{
+                background-color: #ffffcc;                
+            }
+            #content{
+                font-family: sans-serif;
+                font-size: 2em;
+                text-align: center;
+            }
+        </style>
+        <div id="content">
+            <h1>Gooble Bike Starter</h1>
+            <img src="images/logo_bevel_003.png">
+            <p id="message">Gooble Bike will start in <span id="nsec">N</span> seconds...</p>
+        </div>
+    </body>
+
+    <script type="text/javascript">
+        var delay=10;
+    $(function(){
+        setInterval(eachSecond, 1000);
+    });
+
+    function eachSecond() {
+    //    var ora=new Date(2011, 0, 1, 2, 3, 4);
+        delay--;
+        $("#nsec").html(delay);
+        if (delay==0){
+            $("#message").html("Starting...");
+            window.location.href="http://localhost/gbwc";
+        }
+    }    
+    </script>
+
+</html>

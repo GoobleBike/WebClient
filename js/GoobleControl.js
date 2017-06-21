@@ -22,6 +22,7 @@ var URL = "http://localhost/gooble/api/setp_getv?id="+MYID+"&p=";
 
 var SLOPE = 0;
 
+var IMAGE_REFRESH_TIME = 4000;
 var VIEW_REFRESH_TIME = 950;
 var DATA_REFRESH_TIME = 1000;
 //delle prossime due va attivata una sola
@@ -276,7 +277,7 @@ GoobleControl.prototype.loadSegment = function() {
     $("#cruscotto_info").html(presetPercorsi[this.currentSegment][2]);
     setTimeout(function(){
         $("#splash2").hide(); 
-        $("#splash").hide(); 
+        $("#splash").hide(); //fermati
         console.log("current segment : "+goobleControl.currentSegment);
         console.log("start : "+presetPercorsi[goobleControl.currentSegment][0]);
         goobleControl.makeRoute(presetPercorsi[goobleControl.currentSegment][0],presetPercorsi[goobleControl.currentSegment][1]);
@@ -770,6 +771,8 @@ GoobleControl.prototype.autorunBySpeed = function () {
 //        this.autoTimer = setTimeout(this.autoMove.bind(this), 2000);
         this.speedPoller = setInterval(this.pollSpeedFromDefaulUrl, DATA_REFRESH_TIME);
         this.autoTimer = setInterval(this.autoMoveBySpeed, VIEW_REFRESH_TIME);
+//        this.autoTimer = setInterval(this.autoMoveBySpeedNoImg, VIEW_REFRESH_TIME);
+//        this.imageTimer = setInterval(this.updateImage, IMAGE_REFRESH_TIME);
         //commuta stato
         this.goobleButtons.action(this.goobleButtons.AUTORUN);
   }
@@ -789,13 +792,21 @@ GoobleControl.prototype.autoMove = function() {
 */
 
 GoobleControl.prototype.autoMoveBySpeed = function() {
-    console.log(goobleControl.percorsoAttivo?'autoMove-attivo':'autoMove-NONattivo')
+//    console.log(goobleControl.percorsoAttivo?'autoMove-attivo':'autoMove-NONattivo')
   if (goobleControl.percorsoAttivo){
     //programma click
     var distanza = (SPEED *1.5)* VIEW_REFRESH_TIME / 1000 // VIEW_REFRESH_TIME è in msec
     var percorsoFinito=goobleControl.moveNextDistance(distanza);
 //        this.autoTimer = setTimeout(this.autoMove.bind(this), 2000);
         // this.autoTimer = setTimeout(this.autoMove.bind(this), tempo);
+  }
+}
+
+GoobleControl.prototype.autoMoveBySpeedNoImg = function() {
+  if (goobleControl.percorsoAttivo){
+    //distanza in metri
+    var distanza = (SPEED *1.5)* VIEW_REFRESH_TIME / 1000 // VIEW_REFRESH_TIME è in msec
+    var percorsoFinito=goobleControl.moveNextDistanceNoImg(distanza);
   }
 }
 
@@ -1107,22 +1118,65 @@ GoobleControl.prototype.moveNextClick = function() {
 
 GoobleControl.prototype.moveNextDistance = function(distance) {
     // ho avuto un click
-//    clearTimeout(this.timerFermo); // disabilito il timeout precedente
-//    this.timerFermo = setTimeout(this.timeOutFermo.bind(this), TIMEOUT_PER_FERMO); // armo il prossimo timeout
     var percorsoFinito=false;
     //un colpo di click indica una avanzamento sulla strada percorsa
     var now=new Date().getTime();
-    // this.ultimoIntertempo=now-this.lastClickTime;
-    // if (this.ultimoIntertempo>0) {
-    //   if (this.ultimoIntertempo<DELTATMIN){
-    //     this.actualSpeed+=DELTAV_PEROVERFLOW;
-    //     if (this.actualSpeed>MAX_SPEED){
-    //       this.actualSpeed=MAX_SPEED;
-    //     }
-    //   } else {
-    //     this.actualSpeed=SPEED;
-    //   }
-    // }
+    this.actualSpeed=SPEED;
+    console.log("now="+now+", intertempo="+this.ultimoIntertempo+"(msec), velocità="+this.actualSpeed+"(km/h)");
+    this.stradaPercorsa+=distance;
+    this.toNextPoint-=distance;
+    if (INCLINATION_FILTER_MODE===IF_ABSORBER) {
+      this.pendenza=this.inclinationFilter.update(distance);
+      SLOPE = this.pendenza
+    }
+    this.lastClickTime=now;
+    this.view.updateDashboard();
+    //estrae posizione successiva ??
+    if (this.toNextPoint<=0){
+      //avanza al prossimo punto
+      if (this.rideIterator.hasNext()) {
+          //ci sono ancora punti
+          var curPoint=this.moveToNext(this.rideIterator);
+//          this.rideStep++;
+          this.toNextPoint+=curPoint.dst;//imposta la distanza al prossimo punto
+          if (INCLINATION_FILTER_MODE===IF_ABSORBER) {
+            this.inclinationFilter.newPoint(curPoint.inc)
+          }
+          else {
+            this.pendenza=curPoint.inc;
+            SLOPE = this.pendenza
+          }
+          this.view.updateDashboard();
+      }
+      else {
+          //arrivato a destinazione ferma autorun
+          this.percorsoAttivo=false;
+        clearInterval(this.autoTimer);
+        clearInterval(this.speedPoller);
+          this.goobleButtons.action(this.goobleButtons.STOP);
+//          this.clearRoute();//portato dentro a loadSegment
+//          $("#splash2text").html("Complimenti!!!<br>Hai completato il percorso:<br>"+presetPercorsi[this.currentSegment][2]);
+          $("#splash2text").html("Congratulations !!! <br> You've completed the path:<br>"+presetPercorsi[this.currentSegment][2]);
+          $("#splash2").show();
+//          $("#splash").show(2000);
+//          this.view.msgFinePath();
+          percorsoFinito=true;
+//          this.loadSegment();
+            setTimeout(function(){
+                goobleControl.loadSegment();        
+            }, 5000);
+          
+      }
+//      this.view.updateDashboard();
+    }
+    return percorsoFinito;
+};
+
+GoobleControl.prototype.moveNextDistanceNoImg = function(distance) {
+    // ho avuto un click
+    var percorsoFinito=false;
+    //un colpo di click indica una avanzamento sulla strada percorsa
+    var now=new Date().getTime();
     this.actualSpeed=SPEED;
     console.log("now="+now+", intertempo="+this.ultimoIntertempo+"(msec), velocità="+this.actualSpeed+"(km/h)");
     this.stradaPercorsa+=distance;

@@ -33,6 +33,7 @@ GoobleView.prototype.swapCruscottoOffPreloadOn=function(){
 
 GoobleView.prototype.setStatusModeView=function(){
   var mappa = $("#map_canvas");
+  var empty = $("#empty");
   if (this.mode===DEVELOP){
     //DEVELOP
     mappa.width("100%");
@@ -45,8 +46,10 @@ GoobleView.prototype.setStatusModeView=function(){
     //PRODUCTION
     mappa.width("100%");
     mappa.height("100%");
-    h=mappa.height()-100;
+    h=mappa.height()-105;
     mappa.height(h+"px");
+    empty.height(h+"px");
+    empty.width("100%");
   }
 };
 
@@ -145,7 +148,7 @@ GoobleView.prototype.updateDashboard=function(){
   this.speedometer.drawWithInputValue(goobleControl.getActualSpeed());
 //  $("#tachimetro").html("velocità km/h<br>"+goobleControl.getActualSpeed().toFixed(1));
   $("#contakm").html("Km<br>"+goobleControl.getKmPercorsi().toFixed(2));
-  $("#toNextImg").html("to next panorama<br>m "+goobleControl.getToNextPoint().toFixed(1));
+  $("#toNextImg").html("to next panorama<br>m "+(goobleControl.getToNextPoint()>0?goobleControl.getToNextPoint().toFixed(1):0));
   if (goobleControl.mode==DEVELOP) {
     $("#cruscotto_develop").html("pendenza="+(goobleControl.getPendenza()).toFixed(2)+" | ultimo intertempo="+(goobleControl.getUltimoIntertempo()/1000).toFixed(2)+"% | velocità km/h="+goobleControl.getActualSpeed().toFixed(1));
   }
