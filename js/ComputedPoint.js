@@ -1,37 +1,4 @@
 
-Number.prototype.toRad = function() {
-    return this * Math.PI / 180;
-}
-
-Number.prototype.toDeg = function() {
-    return this * 180 / Math.PI;
-}
-
-/**
- * Determina un punto in base a un altro, distanza e direzione
- * @param {type} radianti angolo in radianti
- * @param {type} dist distanza in m
- * @returns {google.maps.LatLng}
- */
-google.maps.LatLng.prototype.destinationPoint = function(rad, dist) {
-    dist = dist / 6371000;  
-
-    var lat1 = this.lat().toRad(), lon1 = this.lng().toRad();
-
-    var lat2 = Math.asin(Math.sin(lat1) * Math.cos(dist) + 
-                        Math.cos(lat1) * Math.sin(dist) * Math.cos(rad));
-
-    var lon2 = lon1 + Math.atan2(Math.sin(rad) * Math.sin(dist) *
-                                Math.cos(lat1), 
-                                Math.cos(dist) - Math.sin(lat1) *
-                                Math.sin(lat2));
-
-    if (isNaN(lat2) || isNaN(lon2)) return null;
-
-    return new google.maps.LatLng(lat2.toDeg(), lon2.toDeg());
-}
-
-
 
 function ComputedPoint(latLng,heading) {
     this.latLng= latLng;
@@ -40,7 +7,8 @@ function ComputedPoint(latLng,heading) {
 
 //gestisce msg di critical error
 ComputedPoint.prototype.compute = function(distance) {
-    this.latLng= this.latLng.destinationPoint(this.heading,distance);
+    this.log(msg);
+//    alert(msg);
 };
 
 
